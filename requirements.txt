@@ -1,10 +1,20 @@
+##Core Data & Excel
 pandas>=2.2.2
-PyMuPDF>=1.24.3
 openpyxl>=3.1.2
+
+##PDF & Image Processing
+PyMuPDF>=1.24.3
 Pillow>=10.3.0
+opencv-python>=4.9.0
+numpy>=1.26.4
+
+##OCR
 pytesseract>=0.3.11
+
+##AI/LLM
+ollama>=0.1.2
+
+##Utilities
 colorama>=0.4.6
 python-dateutil>=2.9.0
-ollama>=0.1.2
 extract
-opencv-python>=4.9.0
