@@ -1,2 +1,3 @@
 # version.py
-VERSION = "25.1.0"
+# Single source of truth for the application version.
+VERSION = "30.0.0"

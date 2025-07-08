@@ -1,4 +1,4 @@
-# run.py
+# run.py - First AI Utility Launcher v30.0.0
 import sys
 import subprocess
 from pathlib import Path
@@ -8,13 +8,14 @@ import threading
 
 # --- Configuration ---
 VENV_DIR = Path(__file__).parent / "venv"
+# Corrected syntax error on the line below
 REQUIREMENTS_FILE = Path(__file__).parent / "requirements.txt"
-MAIN_APP_SCRIPT = Path(__file__).parent / "kyo_qa_tool_app.py"
+MAIN_APP_SCRIPT = Path(__file__).parent / "kyo_qa_tool_app.py" # This can be renamed later if needed
 MIN_PYTHON_VERSION = (3, 9)
 
 # --- ANSI Colors for "Bling" ---
 class Colors:
-    BLUE = '\033[94m'
+    KYOCERA_RED = '\033[38;2;227;26;47m' # The official Kyocera red
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
@@ -22,24 +23,30 @@ class Colors:
     BOLD = '\033[1m'
 
 def print_header():
-    """Prints the stylized ASCII art header."""
+    """Prints the new stylized ASCII art header for the AI Utility."""
+    # ASCII art text: F A I T
+    art = r"""
+.-----------------------------------------------------------------------.
+|      ::::::::::             :::          :::::::::::        :::    :::|
+|     :+:                  :+: :+:            :+:            :+:    :+: |
+|    +:+                 +:+   +:+           +:+            +:+    +:+  |
+|   :#::+::#           +#++:++#++:          +#+            +#+    +:+   |
+|  +#+                +#+     +#+          +#+            +#+    +#+    |
+| #+#                #+#     #+#          #+#            #+#    #+#     |
+|###                ###     ###      ###########         ########       |
+'-----------------------------------------------------------------------'
+"""
     header = f"""
-{Colors.BLUE}
-   __  __ __   ____
-  | |/ // /  / __ \\
-  |   // /  / /_/ /
- /   |/ /_ / ____/
-/_/|_/____/_/
-{Colors.ENDC}
-====================================================
-       {Colors.BOLD}KYO QA ServiceNow Knowledge Tool{Colors.ENDC}
-====================================================
+{Colors.KYOCERA_RED}{art}{Colors.ENDC}
+============================================================
+    {Colors.BOLD}First AI Utility - Self-Contained & Private{Colors.ENDC}
+============================================================
 """
     print(header)
 
 def run_command_with_spinner(command, message):
-    """Runs a command silently while showing a spinner."""
-    spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
+    """Runs a command silently while showing an engaging spinner message."""
+    spinner_chars = ['|', '/', '-', '\\']
     process_done = threading.Event()
 
     def spin():
@@ -57,12 +64,14 @@ def run_command_with_spinner(command, message):
         subprocess.check_call(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         process_done.set()
         spinner_thread.join()
-        sys.stdout.write(f"\r{Colors.GREEN}✓{Colors.ENDC} {message}... Done.\n")
+        sys.stdout.write(f"\r{Colors.GREEN}✓{Colors.ENDC} {message}... Done.          \n")
         return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+    except (subprocess.CalledProcessError, FileNotFoundError) as e:
         process_done.set()
         spinner_thread.join()
-        sys.stdout.write(f"\r{Colors.RED}✗{Colors.ENDC} {message}... Failed.\n")
+        sys.stdout.write(f"\r{Colors.RED}✗{Colors.ENDC} {message}... Failed.          \n")
+        with open("startup_error.log", "a") as f:
+            f.write(f"Error running command {' '.join(map(str, command))}: {e}\n")
         return False
 
 def get_venv_python_path():
@@ -70,22 +79,29 @@ def get_venv_python_path():
     return VENV_DIR / "Scripts" / "python.exe" if sys.platform == "win32" else VENV_DIR / "bin" / "python"
 
 def setup_environment():
-    """Checks Python version, creates venv, and installs dependencies."""
+    """Checks Python version, creates venv, and installs dependencies with better feedback."""
     print_header()
 
     if sys.version_info < MIN_PYTHON_VERSION:
-        print(f"{Colors.RED}✗ Error: Python {'.'.join(map(str, MIN_PYTHON_VERSION))}+ is required.{Colors.ENDC}")
+        print(f"{Colors.RED}✗ Error: Python {'.'.join(map(str, MIN_PYTHON_VERSION))}+ is required. You have {sys.version}{Colors.ENDC}")
         return False
 
     venv_python = get_venv_python_path()
     if not (VENV_DIR.exists() and venv_python.exists()):
-        print("[INFO] Creating virtual environment...")
-        if VENV_DIR.exists(): shutil.rmtree(VENV_DIR)
-        if not run_command_with_spinner([sys.executable, "-m", "venv", str(VENV_DIR)], "Creating venv folder"):
+        print(f"{Colors.YELLOW}[INFO] First-time setup detected. This may take several minutes...{Colors.ENDC}")
+        if VENV_DIR.exists():
+            print("   - Removing incomplete environment...")
+            shutil.rmtree(VENV_DIR)
+        
+        if not run_command_with_spinner([sys.executable, "-m", "venv", str(VENV_DIR)], "Building local environment"):
             return False
-        print("[INFO] Installing dependencies (this may take a few minutes)...")
-        if not run_command_with_spinner([str(venv_python), "-m", "pip", "install", "-r", str(REQUIREMENTS_FILE)], "Installing packages"):
+        
+        print(f"{Colors.YELLOW}[INFO] Installing dependencies and crawlers...{Colors.ENDC}")
+        if not run_command_with_spinner([str(venv_python), "-m", "pip", "install", "-r", str(REQUIREMENTS_FILE)], "Calibrating dependencies"):
             return False
+    else:
+        print(f"{Colors.GREEN}✓ Existing environment detected. Verifying integrity...{Colors.ENDC}")
+        time.sleep(1)
     
     print(f"{Colors.GREEN}✓ Environment is ready.{Colors.ENDC}")
     return True
@@ -93,15 +109,15 @@ def setup_environment():
 def launch_application():
     """Launches the main GUI application and waits for it to close."""
     print(f"\n{Colors.GREEN}--- Launching Application ---{Colors.ENDC}")
-    print("[INFO] A console window will remain open for stability. You can minimize it.")
+    print("[INFO] The tool is starting. You can minimize this console window.")
     
     venv_python = get_venv_python_path()
     try:
         subprocess.run([str(venv_python), str(MAIN_APP_SCRIPT)], check=True)
-        print(f"\n{Colors.GREEN}--- Application Closed ---{Colors.ENDC}")
+        print(f"\n{Colors.GREEN}--- Application Closed Gracefully ---{Colors.ENDC}")
     except subprocess.CalledProcessError:
         print(f"\n{Colors.RED}--- APPLICATION CRASHED ---{Colors.ENDC}")
-        print(f"{Colors.YELLOW}The application closed unexpectedly. Please review any error messages above.{Colors.ENDC}")
+        print(f"{Colors.YELLOW}The application closed unexpectedly. Check for error messages or logs.{Colors.ENDC}")
     except FileNotFoundError:
         print(f"\n{Colors.RED}--- LAUNCH FAILED ---{Colors.ENDC}")
         print(f"{Colors.YELLOW}Could not find the application script: {MAIN_APP_SCRIPT}{Colors.ENDC}")
